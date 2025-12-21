@@ -16,7 +16,9 @@ const __dirname = path.resolve();
 //do ukrywania wartości aby nie były zakodowane w repozytorium na sztywno
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json()); //req body
+app.use(express.json({
+    limit: "10mb",
+})); //req body
 app.use(cors({origin: process.env.CLIENT_URL, credentials: true}));
 app.use(cookieParser());
 

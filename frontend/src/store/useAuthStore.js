@@ -7,10 +7,11 @@ export const useAuthStore = create((set) => ({
     isCheckingAuth: true,
     isSigningUp: false,
     isLoggingIn: false,
+    isUpdatingProfileImage: false,
 
     checkAuth: async () => {
         try {
-            const res = await axiosInstance.get("api/auth/check");
+            const res = await axiosInstance.get("/auth/check");
             set({authUser: res.data});
         } catch (err) {
             console.log("Error in authCheck: ", err);
@@ -51,12 +52,25 @@ export const useAuthStore = create((set) => ({
     },
 
     logout: async () => {
-        try{
+        try {
             await axiosInstance.post("/auth/logout");
             set({authUser: null});
             toast.success("Logged out successfully!");
-        }catch(err){
-            toast.error("Error logging out")
+        } catch (err) {
+            toast.error(err.response.data.message);
+        }
+    },
+
+    updateProfile: async (data) => {
+        set({isUpdatingProfileImage: true});
+        try {
+            const res = await axiosInstance.put("/auth/update-profile", data);
+            set({authUser: res.data});
+            toast.success("Profile updated successfully!");
+        } catch (err) {
+            toast.error(err.response.data.message);
+        } finally {
+            set({isUpdatingProfileImage: false});
         }
     }
 }))
