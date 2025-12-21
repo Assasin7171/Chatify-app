@@ -1,6 +1,6 @@
 //next pozwala wywołać następną drugą metodę w
 //router.put("/update-profile", protectRoute, updateProfile)
-import jwt, {decode} from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
 export const protectRoute = async (req, res, next) => {
@@ -9,7 +9,7 @@ export const protectRoute = async (req, res, next) => {
         if (!token) return res.status(401).send({message: "Unauthorized - No token provided."});
 
         const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-        if (!decodedToken) return res.status(401).send({message: "Unauthorized - Invalid token."});
+        //if (!decodedToken) return res.status(401).send({message: "Unauthorized - Invalid token."});
 
 
         const user = await User.findById(decodedToken.id).select("-password");
