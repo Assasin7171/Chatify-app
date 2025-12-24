@@ -1,6 +1,7 @@
 import {create} from "zustand/react";
 import {axiosInstance} from "../lib/axios.js";
 import toast from "react-hot-toast";
+import {useAuthStore} from "./useAuthStore.js";
 
 export const useChatStore = create((set, get) => ({
     allContacts: [],
@@ -13,7 +14,9 @@ export const useChatStore = create((set, get) => ({
     isSoundEnabled: JSON.parse(localStorage.getItem("isSoundEnabled")) === true,
 
     toggleSound: () => {
-        localStorage.setItem("isSoundEnabled", !get().isSoundEnabled);
+        const {isSoundEnabled} = get();
+
+        localStorage.setItem("isSoundEnabled", !isSoundEnabled);
         set({isSoundEnabled: !get().isSoundEnabled});
     },
 
@@ -31,7 +34,7 @@ export const useChatStore = create((set, get) => ({
             const res = await axiosInstance.get("/messages/contacts");
             set({allContacts: res.data});
         } catch (err) {
-            toast.error(err.response.data.message);
+            toast.error(err.response?.data?.message || "Something went wrong.");
         } finally {
             set({isUserLoading: false});
         }
@@ -43,7 +46,7 @@ export const useChatStore = create((set, get) => ({
             const res = await axiosInstance.get("/messages/chats");
             set({chats: res.data});
         } catch (err) {
-            toast.error(err.response.data.message);
+            toast.error(err.response?.data?.message || "Something went wrong.");
         } finally {
             set({isUserLoading: false});
         }
@@ -55,9 +58,37 @@ export const useChatStore = create((set, get) => ({
             const res = await axiosInstance.get(`/messages/${userId}`);
             set({messages: res.data});
         } catch (err) {
-            toast.error(err.response?.data?.message || "Something went wrong.")
+            toast.error(err.response?.data?.message || "Something went wrong.");
         } finally {
             set({isMessagesLoading: false});
+        }
+    },
+
+    sendMessage: async (messageData) => {
+        const {selectedUser, messages} = get();
+        const {authUser} = useAuthStore.getState();
+
+        const tempId = `temp-${Date.now()}`;
+
+        const optimisticMessage = {
+            _id: tempId,
+            senderId: authUser._id,
+            receiverId: selectedUser._id,
+            text: messageData.text,
+            image: messageData.image,
+            createdAt: new Date().toISOString(),
+            isOptimistic: true, //flag to identify optimistic messages
+        }
+        //immediately update the ui by adding the message to the list of messages
+        set({messages: [...messages, optimisticMessage]});
+
+        try {
+            const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
+            set({messages: messages.concat(res.data)});
+        } catch (e) {
+            //remove the optimistic message from the list of messages if there was an error
+            set({messages: messages});
+            toast.error(e.response?.data?.message || "Something went wrong.");
         }
     }
 }));
