@@ -7,10 +7,11 @@ import cors from "cors"
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import {connectDB} from "./lib/db.js";
+import {app, server} from "./lib/socket.js";
 
 dotenv.config();
 
-const app = express();
+
 const __dirname = path.resolve();
 
 //do ukrywania wartości aby nie były zakodowane w repozytorium na sztywno
@@ -34,7 +35,7 @@ if (process.env.NODE_ENV === "production") {
     });
 }
 
-app.listen(PORT, async () => {
+server.listen(PORT, async () => {
     console.log("Server is running on port " + PORT);
     await connectDB();
 });
